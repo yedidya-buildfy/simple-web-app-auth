@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #0F1419; /* Equivalent to bg-supabase-dark */
+}
+
+#root {
+  padding: 0; /* Remove padding that might expose default white background */
+  max-width: none; /* Allow root to span full width */
+  margin: 0; /* Remove margin */
+  text-align: left; /* Reset text-align from App.css default for #root */
+}
