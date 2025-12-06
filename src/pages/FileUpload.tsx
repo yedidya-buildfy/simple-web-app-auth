@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import FileUploader from '../components/FileUploader'
 import ConfirmationModal from '../components/ConfirmationModal'
+import FileDetailsModal from '../components/FileDetailsModal/FileDetailsModal'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { useFileProcessor } from '../hooks/useFileProcessor'
 import { formatFileSize } from '../lib/storage'
@@ -75,6 +76,15 @@ export default function FileUpload() {
     title: '',
     message: '',
     onConfirm: () => {}
+  })
+
+  // File details modal state
+  const [fileDetailsModal, setFileDetailsModal] = useState<{
+    isOpen: boolean
+    fileId: string | null
+  }>({
+    isOpen: false,
+    fileId: null
   })
 
   // File processor hook
@@ -319,6 +329,16 @@ export default function FileUpload() {
     navigate('/auth')
   }
 
+  /**
+   * Handle file row click to open details modal
+   */
+  const handleFileClick = (fileId: string) => {
+    setFileDetailsModal({
+      isOpen: true,
+      fileId
+    })
+  }
+
   return (
     <div className="flex h-screen bg-black overflow-hidden">
       {/* Sidebar Navigation */}
@@ -551,8 +571,12 @@ export default function FileUpload() {
                 </thead>
                 <tbody className="divide-y divide-gray-800">
                   {filteredFiles.map((file) => (
-                    <tr key={file.id} className={`hover:bg-gray-900/30 transition-colors ${selectedFileIds.has(file.id) ? 'bg-gray-900/50' : ''}`}>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                    <tr
+                      key={file.id}
+                      className={`hover:bg-gray-900/30 transition-colors cursor-pointer ${selectedFileIds.has(file.id) ? 'bg-gray-900/50' : ''}`}
+                      onClick={() => handleFileClick(file.id)}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedFileIds.has(file.id)}
@@ -587,7 +611,7 @@ export default function FileUpload() {
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
                         {new Date(file.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <td className="px-4 py-3 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end space-x-1">
                           {/* Process Button - Show for pending files */}
                           {file.status === 'pending' && (
@@ -653,6 +677,17 @@ export default function FileUpload() {
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
+      />
+
+      {/* File Details Modal */}
+      <FileDetailsModal
+        fileId={fileDetailsModal.fileId}
+        isOpen={fileDetailsModal.isOpen}
+        onClose={() => {
+          setFileDetailsModal({ isOpen: false, fileId: null })
+          // Refresh files list in case data was edited
+          fetchFiles()
+        }}
       />
 </div>
   )

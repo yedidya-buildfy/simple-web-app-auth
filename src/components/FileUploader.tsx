@@ -144,6 +144,18 @@ export default function FileUploader({
     return uploadProgress[filename] === 100
   }
 
+  // Get currently uploading file (only one at a time, not complete)
+  const currentlyUploadingFile = selectedFiles.find(file => {
+    const progress = getProgress(file.name)
+    return progress > 0 && progress < 100
+  })
+
+  // Check if any file has progress (including completed ones that haven't been cleared yet)
+  const hasAnyProgress = Object.keys(uploadProgress).length > 0
+
+  // Get the first file with active progress, or the last uploaded file if we're between uploads
+  const displayFile = currentlyUploadingFile || (hasAnyProgress && uploading ? selectedFiles[selectedFiles.length - 1] : null)
+
   return (
     <div className="w-full">
       {/* Drop Zone */}
@@ -214,55 +226,38 @@ export default function FileUploader({
         </div>
       )}
 
-      {/* Selected Files with Progress */}
-      {selectedFiles.length > 0 && (
-        <div className="mt-6 space-y-3">
-          {selectedFiles.map((file, index) => {
-            const progress = getProgress(file.name)
-            const isUploading = isFileUploading(file.name)
-            const isComplete = isFileComplete(file.name)
-
-            return (
-              <div
-                key={index}
-                className="p-4 rounded-lg bg-gray-900 border border-gray-800"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <DocumentIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-
-                  {isComplete && (
-                    <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  )}
+      {/* Currently Uploading File - Stays visible during entire batch upload */}
+      {displayFile && (
+        <div className="mt-4">
+          <div className="p-4 rounded-lg bg-gray-900 border border-gray-800 transition-all duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <DocumentIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate transition-all duration-200">
+                    {displayFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(displayFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
-
-                {/* Progress Bar */}
-                {isUploading && (
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                      <span>Uploading...</span>
-                      <span>{progress}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
-            )
-          })}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                <span>Uploading...</span>
+                <span>{getProgress(displayFile.name)}%</span>
+              </div>
+              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-300"
+                  style={{ width: `${getProgress(displayFile.name)}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
