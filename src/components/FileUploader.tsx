@@ -10,6 +10,10 @@ export interface FileUploaderProps {
   uploading?: boolean
   uploadProgress?: Record<string, number>
   error?: Error | null
+  classificationResult?: {
+    filename: string
+    type: 'bank' | 'credit_card' | 'invoice'
+  } | null
 }
 
 /**
@@ -23,7 +27,8 @@ export default function FileUploader({
   maxSize = 10 * 1024 * 1024, // 10MB
   uploading = false,
   uploadProgress = {},
-  error = null
+  error = null,
+  classificationResult = null
 }: FileUploaderProps) {
   const [dragActive, setDragActive] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
@@ -226,15 +231,31 @@ export default function FileUploader({
         </div>
       )}
 
-      {/* Currently Uploading File - Stays visible during entire batch upload */}
-      {displayFile && (
-        <div className="mt-4">
-          <div className="p-4 rounded-lg bg-gray-900 border border-gray-800 transition-all duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-3 flex-1 min-w-0">
+      {/* Combined Notifications - Classification Result and Upload Progress */}
+      {(classificationResult || displayFile) && (
+        <div className="mt-4 space-y-3">
+          {/* Classification Result */}
+          {classificationResult && (
+            <div className="p-3 rounded-lg bg-green-900/20 border border-green-500/30">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{classificationResult.filename}</p>
+                  <p className="text-xs text-gray-400">
+                    Detected: {classificationResult.type === 'credit_card' ? 'Credit Card' : classificationResult.type.charAt(0).toUpperCase() + classificationResult.type.slice(1)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {displayFile && (
+            <div className="p-4 rounded-lg bg-gray-900 border border-gray-800">
+              <div className="flex items-center space-x-3 mb-3">
                 <DocumentIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate transition-all duration-200">
+                  <p className="text-sm font-medium text-white truncate">
                     {displayFile.name}
                   </p>
                   <p className="text-xs text-gray-500">
@@ -242,22 +263,22 @@ export default function FileUploader({
                   </p>
                 </div>
               </div>
-            </div>
 
-            {/* Progress Bar */}
-            <div className="mt-2">
-              <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                <span>Uploading...</span>
-                <span>{getProgress(displayFile.name)}%</span>
-              </div>
-              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-300"
-                  style={{ width: `${getProgress(displayFile.name)}%` }}
-                />
+              {/* Progress Bar */}
+              <div>
+                <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                  <span>Uploading...</span>
+                  <span>{getProgress(displayFile.name)}%</span>
+                </div>
+                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-300"
+                    style={{ width: `${getProgress(displayFile.name)}%` }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

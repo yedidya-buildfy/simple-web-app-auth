@@ -9,7 +9,6 @@ import {
   HomeIcon,
   BanknotesIcon,
   CloudArrowUpIcon,
-  SparklesIcon,
   ChartPieIcon,
   Cog6ToothIcon,
   LifebuoyIcon,
@@ -70,6 +69,9 @@ export default function FileUpload() {
     type: FileSourceType
   } | null>(null)
 
+  // Batch upload state to prevent flickering
+  const [batchUploading, setBatchUploading] = useState(false)
+
   // Auto-dismiss timer ref for classification notification
   const dismissTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -118,6 +120,9 @@ export default function FileUpload() {
   const handleFilesSelected = async (selectedFiles: File[]) => {
     console.log('📂 [UPLOAD] Files selected:', selectedFiles.length, 'files')
     console.log('📂 [UPLOAD] Selected source type:', selectedSourceType)
+
+    // Keep batch uploading state true for entire batch
+    setBatchUploading(true)
 
     for (const file of selectedFiles) {
       console.log('📄 [UPLOAD] Processing file:', file.name, 'Size:', file.size)
@@ -183,6 +188,9 @@ export default function FileUpload() {
     }
 
     console.log('✅ [UPLOAD] All files processed')
+
+    // Mark batch uploading as complete
+    setBatchUploading(false)
 
     // Auto-dismiss notification 3 seconds after ALL files are processed
     if (selectedSourceType === 'auto' && classificationResult) {
@@ -529,29 +537,15 @@ export default function FileUpload() {
               <option value="credit_card">Credit Card Statement</option>
               <option value="invoice">Invoice</option>
             </select>
-
-            {/* Classification Result Notification */}
-            {classificationResult && (
-              <div className="mt-4">
-                <div className="flex items-center gap-3 px-4 py-2 bg-green-900/20 border border-green-500/30 rounded-lg">
-                  <SparklesIcon className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{classificationResult.filename}</p>
-                    <p className="text-xs text-gray-400">
-                      Detected: {classificationResult.type === 'credit_card' ? 'Credit Card' : classificationResult.type.charAt(0).toUpperCase() + classificationResult.type.slice(1)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* File Uploader */}
+          {/* File Uploader with Combined Notifications */}
           <FileUploader
             onFilesSelected={handleFilesSelected}
-            uploading={uploading}
+            uploading={batchUploading || uploading}
             uploadProgress={uploadProgress}
             error={error}
+            classificationResult={classificationResult}
           />
         </div>
 
