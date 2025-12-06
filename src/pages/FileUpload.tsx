@@ -124,6 +124,9 @@ export default function FileUpload() {
     // Keep batch uploading state true for entire batch
     setBatchUploading(true)
 
+    // Track if we used auto-detect (to know if we should auto-dismiss notification)
+    let usedAutoDetect = false
+
     for (const file of selectedFiles) {
       console.log('📄 [UPLOAD] Processing file:', file.name, 'Size:', file.size)
 
@@ -134,6 +137,9 @@ export default function FileUpload() {
         if (selectedSourceType === 'auto') {
           console.log('🤖 [UPLOAD] Auto-detect mode - calling AI classifier...')
           console.log('📝 [UPLOAD] Note: Original file will be preserved - AI only reads for classification')
+
+          // Mark that we used auto-detect
+          usedAutoDetect = true
 
           // Use AI to classify (does NOT modify the original file)
           const aiResult = await classifyDocument(file)
@@ -193,8 +199,10 @@ export default function FileUpload() {
     setBatchUploading(false)
 
     // Auto-dismiss notification 3 seconds after ALL files are processed
-    if (selectedSourceType === 'auto' && classificationResult) {
+    if (usedAutoDetect) {
+      console.log('⏱️ [UPLOAD] Setting auto-dismiss timer for classification notification')
       dismissTimerRef.current = setTimeout(() => {
+        console.log('🧹 [UPLOAD] Auto-dismissing classification notification')
         setClassificationResult(null)
         dismissTimerRef.current = null
       }, 3000)
