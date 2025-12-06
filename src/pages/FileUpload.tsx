@@ -18,6 +18,7 @@ import {
 import FileUploader from '../components/FileUploader'
 import ConfirmationModal from '../components/ConfirmationModal'
 import FileDetailsModal from '../components/FileDetailsModal/FileDetailsModal'
+import Button from '../components/Button'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { useFileProcessor } from '../hooks/useFileProcessor'
 import { formatFileSize } from '../lib/storage'
@@ -482,13 +483,14 @@ export default function FileUpload() {
                 <h1 className="text-xl font-semibold text-white">File Upload</h1>
               </div>
               <div className="flex items-center">
-                <button
+                <Button
                   onClick={handleSignOut}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-black bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-black transition-all"
+                  variant="secondary-success"
+                  size="md"
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
                   Sign out
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -568,22 +570,24 @@ export default function FileUpload() {
                 {/* Bulk Action Buttons */}
                 {selectedFileIds.size > 0 && (
                   <>
-                    <button
+                    <Button
                       onClick={handleBatchProcess}
                       disabled={processing || deletingFileId !== null}
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="secondary-success"
+                      size="md"
                     >
                       <PlayIcon className="w-4 h-4 mr-1.5" />
                       Process ({selectedFileIds.size})
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={handleBulkDelete}
                       disabled={processing || deletingFileId !== null}
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="secondary-destructive"
+                      size="md"
                     >
                       <TrashIcon className="w-4 h-4 mr-1.5" />
                       Delete ({selectedFileIds.size})
-                    </button>
+                    </Button>
                   </>
                 )}
                 {/* Search */}
@@ -638,7 +642,7 @@ export default function FileUpload() {
                         type="checkbox"
                         checked={selectedFileIds.size > 0 && selectedFileIds.size === filteredFiles.length}
                         onChange={toggleAllFiles}
-                        className="w-4 h-4 rounded border-2 border-green-500 bg-gray-950 checked:bg-green-500 checked:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-950 cursor-pointer accent-green-500"
+                        className="form-checkbox w-4 h-4 rounded border-gray-700 bg-gray-900 text-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-0 focus:ring-offset-gray-950 cursor-pointer transition-colors"
                       />
                     </th>
                     <th
@@ -700,7 +704,7 @@ export default function FileUpload() {
                           type="checkbox"
                           checked={selectedFileIds.has(file.id)}
                           onChange={() => toggleFileSelection(file.id)}
-                          className="w-4 h-4 rounded border-2 border-green-500 bg-gray-950 checked:bg-green-500 checked:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-950 cursor-pointer accent-green-500"
+                          className="form-checkbox w-4 h-4 rounded border-gray-700 bg-gray-900 text-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-0 focus:ring-offset-gray-950 cursor-pointer transition-colors"
                         />
                       </td>
                       <td className="px-4 py-3 min-w-[200px] max-w-[400px] w-[300px]">
@@ -746,15 +750,16 @@ export default function FileUpload() {
                         <div className="flex items-center justify-end space-x-1">
                           {/* Process Button - Show for pending files */}
                           {file.status === 'pending' && (
-                            <button
+                            <Button
                               onClick={() => handleProcessFile(file.id)}
                               disabled={processing}
-                              className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              variant="secondary-success"
+                              size="sm"
                               title="Process file"
                             >
                               <PlayIcon className="w-3.5 h-3.5 mr-1" />
                               Process
-                            </button>
+                            </Button>
                           )}
 
                           {/* Show items count for completed files */}
@@ -768,7 +773,7 @@ export default function FileUpload() {
                           <button
                             onClick={() => handleDeleteFile(file.id, file.storage_path)}
                             disabled={deletingFileId === file.id || deletingFileId === 'bulk' || processing}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-50"
+                            className="p-1.5 text-red-500 border border-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete file"
                           >
                             <TrashIcon className="w-4 h-4" />
