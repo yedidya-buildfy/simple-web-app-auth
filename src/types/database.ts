@@ -448,6 +448,142 @@ export interface Database {
           created_at?: string
         }
       }
+      document_signatures: {
+        Row: {
+          id: string
+          user_id: string
+          source_name: string
+          document_type: 'bank' | 'credit_card' | 'invoice'
+          file_type: 'pdf' | 'csv' | 'excel' | 'image'
+          columns: Json
+          column_count: number
+          filename_pattern: string | null
+          data_type_signature: string | null
+          date_format: string | null
+          has_header_row: boolean | null
+          first_column_type: 'date' | 'number' | 'text' | null
+          amount_column_indices: number[] | null
+          has_running_balance: boolean | null
+          currency_symbol: string | null
+          typical_row_count_min: number | null
+          typical_row_count_max: number | null
+          pdf_page_count_min: number | null
+          pdf_page_count_max: number | null
+          pdf_has_tables: boolean | null
+          pdf_keywords: string[] | null
+          match_count: number
+          correct_count: number
+          incorrect_count: number
+          last_matched_at: string | null
+          created_from_file_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          source_name: string
+          document_type: 'bank' | 'credit_card' | 'invoice'
+          file_type: 'pdf' | 'csv' | 'excel' | 'image'
+          columns: Json
+          column_count: number
+          filename_pattern?: string | null
+          data_type_signature?: string | null
+          date_format?: string | null
+          has_header_row?: boolean | null
+          first_column_type?: 'date' | 'number' | 'text' | null
+          amount_column_indices?: number[] | null
+          has_running_balance?: boolean | null
+          currency_symbol?: string | null
+          typical_row_count_min?: number | null
+          typical_row_count_max?: number | null
+          pdf_page_count_min?: number | null
+          pdf_page_count_max?: number | null
+          pdf_has_tables?: boolean | null
+          pdf_keywords?: string[] | null
+          match_count?: number
+          correct_count?: number
+          incorrect_count?: number
+          last_matched_at?: string | null
+          created_from_file_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          source_name?: string
+          document_type?: 'bank' | 'credit_card' | 'invoice'
+          file_type?: 'pdf' | 'csv' | 'excel' | 'image'
+          columns?: Json
+          column_count?: number
+          filename_pattern?: string | null
+          data_type_signature?: string | null
+          date_format?: string | null
+          has_header_row?: boolean | null
+          first_column_type?: 'date' | 'number' | 'text' | null
+          amount_column_indices?: number[] | null
+          has_running_balance?: boolean | null
+          currency_symbol?: string | null
+          typical_row_count_min?: number | null
+          typical_row_count_max?: number | null
+          pdf_page_count_min?: number | null
+          pdf_page_count_max?: number | null
+          pdf_has_tables?: boolean | null
+          pdf_keywords?: string[] | null
+          match_count?: number
+          correct_count?: number
+          incorrect_count?: number
+          last_matched_at?: string | null
+          created_from_file_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      file_signature_matches: {
+        Row: {
+          id: string
+          user_id: string
+          file_id: string
+          signature_id: string | null
+          classification_method: 'auto_detected' | 'manual_override' | 'signature_match' | 'manual_correction'
+          detected_type: 'bank' | 'credit_card' | 'invoice'
+          confidence_score: number | null
+          matched_criteria: Json | null
+          criteria_count: number | null
+          user_confirmed: boolean | null
+          user_changed_to: 'bank' | 'credit_card' | 'invoice' | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          file_id: string
+          signature_id?: string | null
+          classification_method: 'auto_detected' | 'manual_override' | 'signature_match' | 'manual_correction'
+          detected_type: 'bank' | 'credit_card' | 'invoice'
+          confidence_score?: number | null
+          matched_criteria?: Json | null
+          criteria_count?: number | null
+          user_confirmed?: boolean | null
+          user_changed_to?: 'bank' | 'credit_card' | 'invoice' | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          file_id?: string
+          signature_id?: string | null
+          classification_method?: 'auto_detected' | 'manual_override' | 'signature_match' | 'manual_correction'
+          detected_type?: 'bank' | 'credit_card' | 'invoice'
+          confidence_score?: number | null
+          matched_criteria?: Json | null
+          criteria_count?: number | null
+          user_confirmed?: boolean | null
+          user_changed_to?: 'bank' | 'credit_card' | 'invoice' | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

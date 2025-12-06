@@ -1,6 +1,6 @@
 import { Fragment, useState, useRef, useCallback, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, PlayIcon } from '@heroicons/react/24/outline'
 import FilePreview from './FilePreview'
 import ExtractedDataPanel from './ExtractedDataPanel'
 import {
@@ -10,6 +10,11 @@ import {
   useUpdateInvoiceRow,
   useDeleteInvoiceRow
 } from '../../hooks/useFileDetails'
+import { useFileProcessor } from '../../hooks/useFileProcessor'
+import { supabase } from '../../lib/supabase'
+import type { Database } from '../../types/database'
+
+type FileSourceType = Database['public']['Tables']['files']['Row']['source_type']
 
 interface FileDetailsModalProps {
   fileId: string | null
@@ -31,6 +36,7 @@ export default function FileDetailsModal({
   const { deleteTransaction } = useDeleteTransaction()
   const { updateInvoiceRow } = useUpdateInvoiceRow()
   const { deleteInvoiceRow } = useDeleteInvoiceRow()
+  const { processFile, processing } = useFileProcessor()
 
   // Resizable split state
   const [leftPanelWidth, setLeftPanelWidth] = useState(40) // percentage
@@ -109,6 +115,39 @@ export default function FileDetailsModal({
     return false
   }
 
+  // Handle process file
+  const handleProcessFile = async () => {
+    if (!fileId) return
+
+    try {
+      await processFile(fileId)
+      // Refresh the data to show processed results
+      await refresh()
+    } catch (error) {
+      console.error('Failed to process file:', error)
+    }
+  }
+
+  // Handle source type change
+  const handleSourceTypeChange = async (newSourceType: FileSourceType) => {
+    if (!fileId) return
+
+    try {
+      // @ts-ignore - Database types issue with Supabase codegen
+      const { error } = await supabase
+        .from('files')
+        .update({ source_type: newSourceType })
+        .eq('id', fileId)
+
+      if (error) throw error
+
+      // Refresh file data
+      await refresh()
+    } catch (error) {
+      console.error('Failed to update source type:', error)
+    }
+  }
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -138,15 +177,55 @@ export default function FileDetailsModal({
               <Dialog.Panel className="w-[95vw] h-[95vh] max-w-[1800px] transform overflow-hidden rounded-2xl bg-gray-950 border border-gray-800 shadow-xl transition-all flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+                  {/* Left: Filename */}
                   <Dialog.Title as="h2" className="text-xl font-semibold text-white">
                     {file?.filename || 'File Details'}
                   </Dialog.Title>
-                  <button
-                    onClick={onClose}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
+
+                  {/* Right: Source Picker, Process Button, Close Button */}
+                  <div className="flex items-center gap-3">
+                    {/* Source Picker - Show for pending files */}
+                    {file?.status === 'pending' && (
+                      <select
+                        value={file.source_type}
+                        onChange={(e) => handleSourceTypeChange(e.target.value as FileSourceType)}
+                        className="px-3 py-2 text-sm bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="bank">Bank</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="invoice">Invoice</option>
+                      </select>
+                    )}
+
+                    {/* Process Button - Show for pending files */}
+                    {file?.status === 'pending' && (
+                      <button
+                        onClick={handleProcessFile}
+                        disabled={processing}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {processing ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <PlayIcon className="w-4 h-4 mr-2" />
+                            Process
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Close Button */}
+                    <button
+                      onClick={onClose}
+                      className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Content - Split View */}

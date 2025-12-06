@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeftIcon,
   TrashIcon,
   DocumentIcon,
   FunnelIcon,
@@ -27,9 +26,11 @@ import type { NavItemType } from '@/components/application/app-navigation/config
 import { SidebarNavigationSlim } from '@/components/application/app-navigation/sidebar-navigation/sidebar-slim'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { classifyDocument } from '../lib/ai/classifier'
 
 type FileSourceType = Database['public']['Tables']['files']['Row']['source_type']
 type FileStatus = Database['public']['Tables']['files']['Row']['status']
+type SourceTypeOption = FileSourceType | 'auto'
 
 const navItems: NavItemType[] = [
   { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -57,13 +58,17 @@ export default function FileUpload() {
     fetchFiles
   } = useFileUpload()
 
-  const [selectedSourceType, setSelectedSourceType] = useState<FileSourceType>('bank')
+  const [selectedSourceType, setSelectedSourceType] = useState<SourceTypeOption>('auto')
   const [filterStatus, setFilterStatus] = useState<FileStatus | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortColumn, setSortColumn] = useState<'filename' | 'created_at' | 'file_size'>('created_at')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
+  const [classificationResult, setClassificationResult] = useState<{
+    filename: string
+    type: FileSourceType
+  } | null>(null)
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -99,13 +104,72 @@ export default function FileUpload() {
    * Handle file selection
    */
   const handleFilesSelected = async (selectedFiles: File[]) => {
+    console.log('📂 [UPLOAD] Files selected:', selectedFiles.length, 'files')
+    console.log('📂 [UPLOAD] Selected source type:', selectedSourceType)
+
     for (const file of selectedFiles) {
+      console.log('📄 [UPLOAD] Processing file:', file.name, 'Size:', file.size)
+
       try {
-        await uploadFile(file, selectedSourceType)
+        let sourceType: FileSourceType
+
+        // Auto-detect or use manual selection
+        if (selectedSourceType === 'auto') {
+          console.log('🤖 [UPLOAD] Auto-detect mode - calling AI classifier...')
+          console.log('📝 [UPLOAD] Note: Original file will be preserved - AI only reads for classification')
+
+          // Use AI to classify (does NOT modify the original file)
+          const aiResult = await classifyDocument(file)
+
+          console.log('✅ [UPLOAD] AI classification result:', {
+            type: aiResult.type,
+            confidence: aiResult.confidence,
+            tokens: aiResult.tokens,
+            cost: aiResult.cost ? `$${aiResult.cost.toFixed(6)}` : 'N/A'
+          })
+
+          sourceType = aiResult.type
+
+          // Log token summary
+          if (aiResult.tokens && aiResult.cost) {
+            console.log('💰 [UPLOAD] Classification cost summary:', {
+              file: file.name,
+              inputTokens: aiResult.tokens.input,
+              outputTokens: aiResult.tokens.output,
+              totalTokens: aiResult.tokens.total,
+              estimatedCost: `$${aiResult.cost.toFixed(6)}`
+            })
+          }
+
+          // Show single notification (replaces any existing one)
+          setClassificationResult({
+            filename: file.name,
+            type: sourceType
+          })
+
+          // Auto-dismiss after 3 seconds
+          setTimeout(() => {
+            setClassificationResult(null)
+          }, 3000)
+
+          console.log('💾 [UPLOAD] Classification result stored for display')
+        } else {
+          console.log('👤 [UPLOAD] Manual selection mode - using:', selectedSourceType)
+          // Manual selection
+          sourceType = selectedSourceType
+        }
+
+        console.log('⬆️ [UPLOAD] Uploading file with source type:', sourceType)
+        // Upload file with determined source type
+        await uploadFile(file, sourceType)
+
+        console.log('✅ [UPLOAD] File uploaded successfully:', file.name)
       } catch (err) {
-        console.error('Upload failed:', err)
+        console.error('❌ [UPLOAD] Upload failed for file:', file.name, 'Error:', err)
       }
     }
+
+    console.log('✅ [UPLOAD] All files processed')
   }
 
   /**
@@ -127,6 +191,26 @@ export default function FileUpload() {
         }
       }
     })
+  }
+
+  /**
+   * Handle source type change
+   */
+  const handleSourceTypeChange = async (fileId: string, newSourceType: FileSourceType) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        // @ts-ignore - Database types issue with Supabase codegen
+        .update({ source_type: newSourceType })
+        .eq('id', fileId)
+
+      if (error) throw error
+
+      // Refresh files to show updated source
+      await fetchFiles()
+    } catch (err) {
+      console.error('Failed to update source type:', err)
+    }
   }
 
   /**
@@ -412,25 +496,33 @@ export default function FileUpload() {
           {/* Source Type Selection */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-300 mb-3">
-              Select Source Type
+              Document Type
             </label>
-            <div className="flex space-x-4">
-              {(['bank', 'credit_card', 'invoice'] as FileSourceType[]).map(type => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedSourceType(type)}
-                  className={`
-                    px-6 py-3 rounded-lg font-medium transition-all
-                    ${selectedSourceType === type
-                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/20'
-                      : 'bg-gray-900 text-gray-400 hover:bg-gray-800 border border-gray-800'
-                    }
-                  `}
-                >
-                  {type === 'credit_card' ? 'Credit Card' : type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              ))}
-            </div>
+            <select
+              value={selectedSourceType}
+              onChange={(e) => setSelectedSourceType(e.target.value as SourceTypeOption)}
+              className="w-full max-w-md px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="auto">Auto-detect (Recommended)</option>
+              <option value="bank">Bank Statement</option>
+              <option value="credit_card">Credit Card Statement</option>
+              <option value="invoice">Invoice</option>
+            </select>
+
+            {/* Classification Result Notification */}
+            {classificationResult && (
+              <div className="mt-4">
+                <div className="flex items-center gap-3 px-4 py-2 bg-green-900/20 border border-green-500/30 rounded-lg">
+                  <SparklesIcon className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{classificationResult.filename}</p>
+                    <p className="text-xs text-gray-400">
+                      Detected: {classificationResult.type === 'credit_card' ? 'Credit Card' : classificationResult.type.charAt(0).toUpperCase() + classificationResult.type.slice(1)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* File Uploader */}
@@ -526,7 +618,7 @@ export default function FileUpload() {
                       />
                     </th>
                     <th
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-300"
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-300 min-w-[200px] max-w-[400px] w-[300px]"
                       onClick={() => handleSort('filename')}
                     >
                       <div className="flex items-center space-x-1">
@@ -538,6 +630,9 @@ export default function FileUpload() {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">
                       Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">
+                      Source
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">
                       Type
@@ -584,21 +679,33 @@ export default function FileUpload() {
                           className="w-4 h-4 rounded border-gray-700 bg-gray-900 text-green-500 focus:ring-green-500 focus:ring-offset-gray-950"
                         />
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-4 py-3 min-w-[200px] max-w-[400px] w-[300px]">
+                        <div className="flex items-center space-x-2 min-w-0">
                           <DocumentIcon className={`w-4 h-4 flex-shrink-0 ${getFileTypeColor(file.file_type)}`} />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-white truncate">
-                              {file.filename}
-                            </span>
-                            <span className="text-xs text-gray-500 capitalize">
-                              {file.source_type === 'credit_card' ? 'Credit Card' : file.source_type}
-                            </span>
-                          </div>
+                          <span className="text-sm font-medium text-white truncate block min-w-0" title={file.filename}>
+                            {file.filename}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {getStatusBadge(file.status)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        {file.status === 'pending' ? (
+                          <select
+                            value={file.source_type}
+                            onChange={(e) => handleSourceTypeChange(file.id, e.target.value as FileSourceType)}
+                            className="px-2 py-1 text-xs bg-gray-900 border border-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          >
+                            <option value="bank">Bank</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="invoice">Invoice</option>
+                          </select>
+                        ) : (
+                          <span className="text-sm text-gray-400 capitalize">
+                            {file.source_type === 'credit_card' ? 'Credit Card' : file.source_type}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="text-sm text-gray-400 capitalize">
