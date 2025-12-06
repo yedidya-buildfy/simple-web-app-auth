@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, UserIcon } from '@heroicons/react/24/outline'
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import Logo from '../components/Logo'
 import Input from '../components/Input'
 import Button from '../components/Button'
@@ -18,6 +18,14 @@ export default function Auth() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { signIn, signUp, user } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
@@ -25,16 +33,8 @@ export default function Auth() {
     setError(null)
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) throw signInError
-
-      if (data.user) {
-        navigate('/dashboard')
-      }
+      await signIn(email, password)
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')
     } finally {
@@ -60,21 +60,8 @@ export default function Auth() {
     }
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      })
-
-      if (signUpError) throw signUpError
-
-      if (data.user) {
-        navigate('/dashboard')
-      }
+      await signUp(email, password, fullName)
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'An error occurred during sign up')
     } finally {

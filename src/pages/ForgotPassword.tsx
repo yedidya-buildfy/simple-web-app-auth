@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { EnvelopeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import AuthLayout from '../components/AuthLayout'
 import Input from '../components/Input'
 import Button from '../components/Button'
@@ -12,6 +12,15 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const navigate = useNavigate()
+  const { resetPassword, user } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleResetPassword = async (e: FormEvent) => {
     e.preventDefault()
@@ -19,12 +28,7 @@ export default function ForgotPassword() {
     setError(null)
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-
-      if (resetError) throw resetError
-
+      await resetPassword(email)
       setSuccess(true)
     } catch (err: any) {
       setError(err.message || 'An error occurred while sending reset email')

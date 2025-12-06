@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import AuthLayout from '../components/AuthLayout'
 import Input from '../components/Input'
 import Button from '../components/Button'
@@ -14,6 +14,14 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { signIn, user } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
@@ -21,16 +29,8 @@ export default function Login() {
     setError(null)
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) throw signInError
-
-      if (data.user) {
-        navigate('/dashboard')
-      }
+      await signIn(email, password)
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')
     } finally {
