@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   TrashIcon,
@@ -70,6 +70,9 @@ export default function FileUpload() {
     type: FileSourceType
   } | null>(null)
 
+  // Auto-dismiss timer ref for classification notification
+  const dismissTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
@@ -99,6 +102,15 @@ export default function FileUpload() {
   useEffect(() => {
     fetchFiles()
   }, [fetchFiles])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current)
+      }
+    }
+  }, [])
 
   /**
    * Handle file selection
@@ -141,16 +153,17 @@ export default function FileUpload() {
             })
           }
 
-          // Show single notification (replaces any existing one)
+          // Clear any existing dismiss timer to keep notification visible
+          if (dismissTimerRef.current) {
+            clearTimeout(dismissTimerRef.current)
+            dismissTimerRef.current = null
+          }
+
+          // Show notification (replaces previous one, stays visible)
           setClassificationResult({
             filename: file.name,
             type: sourceType
           })
-
-          // Auto-dismiss after 3 seconds
-          setTimeout(() => {
-            setClassificationResult(null)
-          }, 3000)
 
           console.log('💾 [UPLOAD] Classification result stored for display')
         } else {
@@ -170,6 +183,14 @@ export default function FileUpload() {
     }
 
     console.log('✅ [UPLOAD] All files processed')
+
+    // Auto-dismiss notification 3 seconds after ALL files are processed
+    if (selectedSourceType === 'auto' && classificationResult) {
+      dismissTimerRef.current = setTimeout(() => {
+        setClassificationResult(null)
+        dismissTimerRef.current = null
+      }, 3000)
+    }
   }
 
   /**
