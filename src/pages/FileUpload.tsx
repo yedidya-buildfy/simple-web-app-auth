@@ -9,6 +9,7 @@ import {
   HomeIcon,
   BanknotesIcon,
   CloudArrowUpIcon,
+  SparklesIcon,
   ChartPieIcon,
   Cog6ToothIcon,
   LifebuoyIcon,
