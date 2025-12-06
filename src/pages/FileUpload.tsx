@@ -638,7 +638,7 @@ export default function FileUpload() {
                         type="checkbox"
                         checked={selectedFileIds.size > 0 && selectedFileIds.size === filteredFiles.length}
                         onChange={toggleAllFiles}
-                        className="w-4 h-4 rounded border-gray-700 bg-gray-900 text-green-500 focus:ring-green-500 focus:ring-offset-gray-950"
+                        className="w-4 h-4 rounded border-2 border-green-500 bg-gray-950 checked:bg-green-500 checked:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-950 cursor-pointer accent-green-500"
                       />
                     </th>
                     <th
@@ -700,7 +700,7 @@ export default function FileUpload() {
                           type="checkbox"
                           checked={selectedFileIds.has(file.id)}
                           onChange={() => toggleFileSelection(file.id)}
-                          className="w-4 h-4 rounded border-gray-700 bg-gray-900 text-green-500 focus:ring-green-500 focus:ring-offset-gray-950"
+                          className="w-4 h-4 rounded border-2 border-green-500 bg-gray-950 checked:bg-green-500 checked:border-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-950 cursor-pointer accent-green-500"
                         />
                       </td>
                       <td className="px-4 py-3 min-w-[200px] max-w-[400px] w-[300px]">
