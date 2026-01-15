@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark theme as default (per user's requirement) */
+  --background: #0F1419;
+  --background-secondary: #1A1F25;
+  --background-hover: #242B33;
+  --foreground: #ededed;
+  --foreground-muted: #9CA3AF;
+
+  /* Supabase green palette */
+  --green: #5ED591;
+  --green-light: #4FFFB0;
+  --green-dark: #2BA86F;
+
+  /* Status colors */
+  --success: #5ED591;
+  --error: #EF4444;
+  --warning: #F59E0B;
+
+  /* Border colors */
+  --border: #374151;
+  --border-light: #4B5563;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-hover: var(--background-hover);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-green-dark: var(--green-dark);
+
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
