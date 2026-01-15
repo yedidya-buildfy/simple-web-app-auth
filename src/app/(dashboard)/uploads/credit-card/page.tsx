@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { FileUpload } from "@/components/ui/FileUpload";
-import { Button } from "@/components/ui/Button";
+import { FilesTable } from "@/components/ui/FilesTable";
 
 export default function CreditCardUploadsPage() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleFilesSelected = (selectedFiles: File[]) => {
-    setFiles((prev) => [...prev, ...selectedFiles]);
-  };
-
-  const handleUpload = async () => {
-    // TODO: Process credit card files
-    console.log("Processing credit card files:", files);
+  const handleUploadComplete = () => {
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -23,23 +18,18 @@ export default function CreditCardUploadsPage() {
         Upload your credit card statement exports to import transactions
       </p>
 
-      <div className="max-w-2xl">
-        <FileUpload
-          title="Drop credit card statements here"
-          description="Drag and drop your credit card export files, or click to browse"
-          acceptedTypes={[".csv", ".xlsx", ".xls"]}
-          acceptLabel="CSV, Excel files"
-          onFilesSelected={handleFilesSelected}
-        />
+      <FileUpload
+        title="Drop credit card statements here"
+        description="Drag and drop your credit card export files, or click to browse"
+        acceptedTypes={[".csv", ".xlsx", ".xls"]}
+        acceptLabel="CSV, Excel files"
+        sourceType="credit_card"
+        onUploadComplete={handleUploadComplete}
+      />
 
-        {files.length > 0 && (
-          <div className="mt-6">
-            <Button onClick={handleUpload} className="w-full">
-              Process {files.length} file{files.length !== 1 ? "s" : ""}
-            </Button>
-          </div>
-        )}
-      </div>
+      <div className="h-6" />
+
+      <FilesTable sourceType="credit_card" refreshTrigger={refreshTrigger} />
     </div>
   );
 }

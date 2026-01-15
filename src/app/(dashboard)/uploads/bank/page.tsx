@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { FileUpload } from "@/components/ui/FileUpload";
-import { Button } from "@/components/ui/Button";
+import { FilesTable } from "@/components/ui/FilesTable";
 
 export default function BankUploadsPage() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleFilesSelected = (selectedFiles: File[]) => {
-    setFiles((prev) => [...prev, ...selectedFiles]);
-  };
-
-  const handleUpload = async () => {
-    // TODO: Process bank transaction files
-    console.log("Processing bank files:", files);
+  const handleUploadComplete = () => {
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -23,23 +18,18 @@ export default function BankUploadsPage() {
         Upload your bank statement exports to import transactions
       </p>
 
-      <div className="max-w-2xl">
-        <FileUpload
-          title="Drop bank statements here"
-          description="Drag and drop your bank export files, or click to browse"
-          acceptedTypes={[".csv", ".xlsx", ".xls"]}
-          acceptLabel="CSV, Excel files"
-          onFilesSelected={handleFilesSelected}
-        />
+      <FileUpload
+        title="Drop bank statements here"
+        description="Drag and drop your bank export files, or click to browse"
+        acceptedTypes={[".csv", ".xlsx", ".xls"]}
+        acceptLabel="CSV, Excel files"
+        sourceType="bank"
+        onUploadComplete={handleUploadComplete}
+      />
 
-        {files.length > 0 && (
-          <div className="mt-6">
-            <Button onClick={handleUpload} className="w-full">
-              Process {files.length} file{files.length !== 1 ? "s" : ""}
-            </Button>
-          </div>
-        )}
-      </div>
+      <div className="h-6" />
+
+      <FilesTable sourceType="bank" refreshTrigger={refreshTrigger} />
     </div>
   );
 }

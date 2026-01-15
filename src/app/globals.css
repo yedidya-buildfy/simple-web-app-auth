@@ -69,3 +69,58 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-light);
 }
+
+/* Custom checkbox styling for dark theme */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid rgba(94, 213, 145, 0.5);
+  border-radius: 0.25rem;
+  background-color: var(--background);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--green);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--green);
+  border-color: var(--green);
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4.5px;
+  top: 1.5px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--background);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgba(94, 213, 145, 0.3);
+}
+
+input[type="checkbox"]:indeterminate {
+  background-color: var(--green);
+  border-color: var(--green);
+}
+
+input[type="checkbox"]:indeterminate::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 8px;
+  height: 2px;
+  background-color: var(--background);
+}
